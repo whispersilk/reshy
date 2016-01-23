@@ -14,7 +14,7 @@ abstract class Module {
 
     Module() {
         initCommands()
-        commands.each { command -> command.condition.delegate = command }
+        commands.each { command -> command.condition?.delegate = command }
     }
 
     boolean activeForUser(String user) {

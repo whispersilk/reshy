@@ -38,9 +38,9 @@ class DiceModule extends Module {
     void setup(ReshBot bot) {
         this.bot = bot
         this.options = bot.getOptions().dice
-        this.mode = AccessMode.fromString(options.mode)
+        this.mode = options?.mode ? AccessMode.fromString(options.mode) : AccessMode.ENABLED
         commands.each { command -> 
-            Map entry = options.commands[command.name]
+            Map entry = options?.commands[command.name]
             if(entry) {
                 command.mode = AccessMode.fromString(entry.mode) ?: command.mode
                 command.triggers = (entry.triggers != null) ? entry.triggers as Set : command.triggers

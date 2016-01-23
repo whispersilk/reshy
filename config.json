@@ -164,7 +164,7 @@
     },
     "dice": {
         "mode": "enabled",
-        "commands" : {
+        "commands": {
             "roll": {
                 "mode": "enabled",
                 "triggers": [
@@ -179,6 +179,90 @@
                 "mode": "enabled",
                 "triggers": [
                     "~add"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            }
+        }
+    },
+    "quote": {
+        "mode": "enabled",
+        "filepath": "",
+        "filename": "quotes.txt",
+        "commands": {
+            "addquote": {
+                "mode": "enabled",
+                "triggers": [
+                    "~addquote"
+                ],
+                "on": [
+                    "message"
+                ]
+            },
+            "delquote": {
+                "mode": "enabled",
+                "triggers": [
+                    "~delquote"
+                ],
+                "on": [
+                    "message"
+                ]
+            },
+            "findquote": {
+                "mode": "enabled",
+                "triggers": [
+                    "~findquote"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            },
+            "quote": {
+                "mode": "enabled",
+                "triggers": [
+                    "~quote"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            },
+            "numquotes": {
+                "mode": "enabled",
+                "triggers": [
+                    "~numquotes"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            }
+        }
+    },
+    "reaction": {
+        "mode": "enabled",
+        "commands": {
+            "greet": {
+                "mode": "enabled",
+                "triggers": [
+                    
+                ],
+                "on": [
+                    "join"
+                ]
+            },
+            "hello": {
+                "mode": "enabled",
+                "triggers": [
+                    "~hello",
+                    "hi",
+                    "hello",
+                    "hey",
+                    "hiho",
+                    "oi"
                 ],
                 "on": [
                     "message",

@@ -5,12 +5,14 @@ import reshy.data.Action
 import reshy.module.Module
 import reshy.module.CoreModule
 import reshy.module.DiceModule
+import reshy.module.QuoteModule
+import reshy.module.ReactionModule
 import reshy.util.BotAccessData
 import reshy.util.BotOptions
 
 class ReshBot extends PircBot {
 
-    List<Module> modules = [new CoreModule(), new DiceModule()]
+    List<Module> modules = [new CoreModule(), new DiceModule(), new QuoteModule(), new ReactionModule()]
     private BotOptions options
     private BotAccessData accessData
 
