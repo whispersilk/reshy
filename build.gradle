@@ -1,0 +1,13 @@
+apply plugin: 'groovy'
+apply plugin: 'application'
+
+mainClassName = 'reshy.ReshBotMain'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+	compile 'org.codehaus.groovy:groovy-all:2.4.5'
+	compile 'pircbot:pircbot:1.5.0'
+}

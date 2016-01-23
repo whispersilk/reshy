@@ -1,0 +1,190 @@
+{
+    "bot": {
+        "verbose": false,
+        "messagedelay": 1,
+        "server": "irc.mibbit.net",
+        "nick": "Threshy",
+        "autojoin": [
+            "#reshytesting"
+        ]
+    },
+    "accessdata": {
+        "owner": "Catastrophe",
+        "admins": [
+            
+        ]
+    },
+    "core": {
+        "mode": "restricted",
+        "commands": {
+            "join": {
+                "mode": "restricted",
+                "triggers": [
+                    "~join"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            },
+            "leave": {
+                "mode": "restricted",
+                "triggers": [
+                    "~leave"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            },
+            "enable": {
+                "mode": "restricted",
+                "triggers": [
+                    "~enable"
+                ],
+                "on": [
+                    "message"
+                ]
+            },
+            "restrict": {
+                "mode": "restricted",
+                "triggers": [
+                    "~restrict"
+                ],
+                "on": [
+                    "message"
+                ]
+            },
+            "disable": {
+                "mode": "restricted",
+                "triggers": [
+                    "~disable"
+                ],
+                "on": [
+                    "message"
+                ]
+            },
+            "save": {
+                "mode": "restricted",
+                "triggers": [
+                    "~save"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            },
+            "reload": {
+                "mode": "restricted",
+                "triggers": [
+                    "~reload"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            },
+            "addadmin": {
+                "mode": "owneronly",
+                "triggers": [
+                    "~addadmin"
+                ],
+                "on": [
+                    "message"
+                ]
+            },
+            "deladmin": {
+                "mode": "owneronly",
+                "triggers": [
+                    "~deladmin"
+                ],
+                "on": [
+                    "message"
+                ]
+            },
+            "admins": {
+                "mode": "restricted",
+                "triggers": [
+                    "~admins"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            },
+            "alias": {
+                "mode": "restricted",
+                "triggers": [
+                    "~alias"
+                ],
+                "on": [
+                    "message"
+                ]
+            },
+            "dealias": {
+                "mode": "restricted",
+                "triggers": [
+                    "~dealias"
+                ],
+                "on": [
+                    "message"
+                ]
+            },
+            "aliases": {
+                "mode": "restricted",
+                "triggers": [
+                    "~aliases"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            },
+            "commands": {
+                "mode": "restricted",
+                "triggers": [
+                    "~commands"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            },
+            "modules": {
+                "mode": "restricted",
+                "triggers": [
+                    "~modules"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            }
+        }
+    },
+    "dice": {
+        "mode": "enabled",
+        "commands" : {
+            "roll": {
+                "mode": "enabled",
+                "triggers": [
+                    "~roll"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            },
+            "add": {
+                "mode": "enabled",
+                "triggers": [
+                    "~add"
+                ],
+                "on": [
+                    "message",
+                    "pm"
+                ]
+            }
+        }
+    }
+}
