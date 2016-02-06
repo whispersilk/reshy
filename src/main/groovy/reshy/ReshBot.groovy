@@ -2,38 +2,47 @@ package reshy
 
 import org.jibble.pircbot.*
 import reshy.data.Action
+
 import reshy.module.Module
+import reshy.module.CapeModule
 import reshy.module.CoreModule
 import reshy.module.DiceModule
 import reshy.module.QuoteModule
 import reshy.module.ReactionModule
+import reshy.module.SeenTellModule
+
 import reshy.util.BotAccessData
 import reshy.util.BotOptions
 
 class ReshBot extends PircBot {
 
-    List<Module> modules = [new CoreModule(), new DiceModule(), new QuoteModule(), new ReactionModule()]
+    private static final List<Class> MODULE_NAMES = [CoreModule, CapeModule, DiceModule, QuoteModule, ReactionModule, SeenTellModule] // List of module classes to invoke. Groovy allows us to leave off the ".class"
+    List<Module> modules
     private BotOptions options
     private BotAccessData accessData
 
     ReshBot() {
         options = new BotOptions()
         accessData = new BotAccessData()
-        this.setName(options.data.bot.nick)
-        this.connect(options.data.bot.server)
+        this.setName(getOptions().bot.nick)
+        this.connect(getOptions().bot.server)
         init()
     }
 
     void init() {
+        modules = []
         accessData.setOwner(getOptions().accessdata.owner)
         accessData.setAdmins(getOptions().accessdata.admins as Set)
         this.setVerbose(getOptions().bot.verbose)
         this.setMessageDelay(getOptions().bot.messagedelay as long)
-        modules.each { module ->
-            module.setup(this)
-        }
+        this.changeNick(getOptions().bot.nick)
         getOptions().bot.autojoin.each { channel ->
             this.joinChannel(channel)
+        }
+        MODULE_NAMES.each { moduleName ->
+            Module module = moduleName.newInstance()
+            module.setup(this)
+            modules << module
         }
     }
 
@@ -87,6 +96,10 @@ class ReshBot extends PircBot {
         }
     }
 
+    void onDisconnect() {
+        init()
+    }
+
     void onInvite(String targetNick, String sourceNick, String sourceLogin, String sourceHostname, String channel) {
         modules.each { module ->
             if(module.activeForUser(sourceNick) && module.registers(Action.INVITE)) {
@@ -127,6 +140,7 @@ class ReshBot extends PircBot {
         }
     }
 
+    // Convenience method for sending multi-line messages.
     void send(String channel, String messages) {
         messages.split('\n').each { message ->
             sendMessage(channel, message)

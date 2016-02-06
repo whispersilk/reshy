@@ -11,9 +11,11 @@ abstract class Module {
     ReshBot bot
     AccessMode mode
     List<Command> commands
+    String name
+    String helpMessage
 
     Module() {
-        initCommands()
+        init()
         commands.each { command -> command.condition?.delegate = command }
     }
 
@@ -31,9 +33,11 @@ abstract class Module {
         return false
     }
 
-    abstract void initCommands()
+    abstract void init()
 
-    abstract String name()
+    String name() {
+        return name
+    }
     
     abstract boolean registers(Action action)
 

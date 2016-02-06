@@ -11,76 +11,87 @@ class CoreModule extends Module {
     // options inherited from superclass
     // mode inherited from superclass
     // commands inherited from superclass
+    // name inherited from superclass
+    // helpMessage inherited from superclass
 
     private static final List REGISTERS = [Action.MESSAGE, Action.PRIVATEMESSAGE]
 
-    void initCommands() {
+    void init() {
+        name = 'core'
+        helpMessage = 'Provides core functionality related to modifying other modules and their permissions.'
         commands = [
             [name: 'join', mode: AccessMode.RESTRICTED, triggers: ['~join'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doJoin(msc[0]) }
+                action: { String... msc -> doJoin(msc[0]) },
+                helpMessage: 'Causes the bot to join a channel. Invoked as [trigger] [channel name]'
             ] as Command,
             [name: 'leave', mode: AccessMode.RESTRICTED, triggers: ['~leave'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc ->  doLeave(msc[0]) }
+                action: { String... msc ->  doLeave(msc[0]) },
+                helpMessage: 'Causes the bot to leave a channel. Invoked as [trigger] [channel name]'
             ] as Command,
             [name: 'enable', mode: AccessMode.RESTRICTED, triggers: ['~enable'], on: [Action.MESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doEnable(*msc) }
+                action: { String... msc -> doEnable(*msc) },
+                helpMessage: 'Enables a module or command. Invoked as [trigger] [module name] [command name]'
             ] as Command,
             [name: 'restrict', mode: AccessMode.RESTRICTED, triggers: ['~restrict'], on: [Action.MESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doRestrict(*msc)}
+                action: { String... msc -> doRestrict(*msc)},
+                helpMessage: 'Restricts access to a module or command. Invoked as [trigger] [module name] [command name]'
             ] as Command,
             [name: 'disable', mode: AccessMode.RESTRICTED, triggers: ['~disable'], on: [Action.MESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doDisable(*msc)}
+                action: { String... msc -> doDisable(*msc)},
+                helpMessage: 'Disables a module or command. Invoked as [trigger] [module name] [command name]'
             ] as Command,
             [name: 'save', mode: AccessMode.RESTRICTED, triggers: ['~save'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doSave(msc[2])}
+                action: { String... msc -> doSave(msc[2])},
+                helpMessage: 'Saves the current settings to the configuration file. Invoked as [trigger]'
             ] as Command,
             [name: 'reload', mode: AccessMode.RESTRICTED, triggers: ['~reload'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doReload(msc[2])}
+                action: { String... msc -> doReload(msc[2])},
+                helpMessage: 'Reloads the bot\'s modules from the config file. Invoked as [trigger]'
             ] as Command,
             [name: 'addadmin', mode: AccessMode.OWNER_ONLY, triggers: ['~addadmin'], on: [Action.MESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doAddAdmin(*msc)}
+                action: { String... msc -> doAddAdmin(*msc)},
+                helpMessage: 'Adds a user as an admin. Invoked as [trigger] [nick]'
             ] as Command,
             [name: 'deladmin', mode: AccessMode.OWNER_ONLY, triggers: ['~deladmin'], on: [Action.MESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doDelAdmin(*msc)}
+                action: { String... msc -> doDelAdmin(*msc)},
+                helpMessage: 'Removes a user as an admin. Invoked as [trigger] [nick]'
             ] as Command,
             [name: 'admins', mode: AccessMode.RESTRICTED, triggers: ['~admins'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doAdmins(msc[2]) }
+                action: { String... msc -> doAdmins(msc[2]) },
+                helpMessage: 'Gets a list of the current admins. Invoked as [trigger]'
             ] as Command,
             [name: 'alias', mode: AccessMode.RESTRICTED, triggers: ['~alias'], on: [Action.MESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doAlias(*msc) }
+                action: { String... msc -> doAlias(*msc) },
+                helpMessage: 'Adds an alias as a trigger to a command. Invoked as [trigger] [module] [command] [alias to add]'
             ] as Command,
             [name: 'dealias', mode: AccessMode.RESTRICTED, triggers: ['~dealias'], on: [Action.MESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doDeAlias(*msc) }
+                action: { String... msc -> doDeAlias(*msc) },
+                helpMessage: 'Removes an alias as a trigger to a command. Invoked as [trigger] [module] [command] [alias to remove]'
             ] as Command,
             [name: 'aliases', mode: AccessMode.RESTRICTED, triggers: ['~aliases'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> doAliases(*msc) }
+                action: { String... msc -> doAliases(*msc) },
+                helpMessage: 'Gets a list off aliases for a command. Invoked as [trigger] [module] [command]'
             ] as Command,
-            [name: 'commands', mode: AccessMode.RESTRICTED, triggers: ['~commands'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
+            [name: 'help', mode: AccessMode.ENABLED, triggers: ['~help'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> showCommands(*msc) }
-            ] as Command,
-            [name: 'modules', mode: AccessMode.RESTRICTED, triggers: ['~modules'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
-                condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> showModules(msc[2]) }
+                action: { String... msc -> doHelp(*msc) },
+                helpMessage: 'Provides help menu information about a module or command. Invoked as [trigger] to display a list of modules, ' + 
+                '[trigger] [module] to display a module\'s help information and a list of its commands, or [trigger] [module] [command] to display a command\'s help information.'
             ] as Command
         ]
-    }
-
-    String name() {
-        return 'core'
     }
 
     boolean registers(Action action) {
@@ -89,8 +100,8 @@ class CoreModule extends Module {
 
     void setup(ReshBot bot) {
         this.bot = bot
-        this.options = bot.getOptions().core
-        this.mode = options?.mode ? AccessMode.fromString(options.mode) : AccessMode.RESTRICTED
+        this.options = bot.getOptions()[name]
+        this.mode = options?.mode ? AccessMode.fromString(options.mode) : AccessMode.ENABLED
         commands.each { command -> 
             Map entry = options?.commands[command.name]
             if(entry) {
@@ -286,20 +297,23 @@ class CoreModule extends Module {
             bot.send(channel, "You need to provide a command to add an alias to.")
             return
         }
-        Command command = module.commands.find { it.name == pieces[1] }
+        pieces.remove(0)
+        Command command = module.commands.find { it.name == pieces[0] }
         if(!command) {
-            bot.send(channel, "Module '${module.name()}' doesn't have a command '${(pieces[1]) ?: ''}'.")
+            bot.send(channel, "Module '${module.name()}' doesn't have a command '${(pieces[0]) ?: ''}'.")
         }
-        else if(pieces.size() < 3) {
+        else if(pieces.size() < 2) {
             bot.send(channel, "You need to provide an alias to add.")
         }
         else if(bot.isOwner(sender) || (command.mode != AccessMode.OWNER_ONLY)) {
-            if(pieces[2] in command.triggers) {
-                bot.send(channel, "Command '${command.name}' of module '${module.name()}' already aliased to '${(pieces[2]) ?: ''}'.")
+            pieces.remove(0)
+            String alias = pieces.join(' ')
+            if(alias in command.triggers) {
+                bot.send(channel, "Command '${command.name}' of module '${module.name()}' already aliased to '${alias ?: ''}'.")
                 return
             }
-            command.triggers << pieces[2]
-            bot.send(channel, "Added '${pieces[2]}' as an alias for command '${command.name}' of module '${module.name()}'.")
+            command.triggers << alias
+            bot.send(channel, "Added '${alias}' as an alias for command '${command.name}' of module '${module.name()}'.")
         }
         else {
             bot.send(channel, "You can't modify the aliases of that command.")
@@ -318,22 +332,25 @@ class CoreModule extends Module {
             bot.send(channel, "You need to provide a command to remove an alias from.")
             return
         }
-        Command command = module.commands.find { it.name == pieces[1] }
+        pieces.remove(0)
+        Command command = module.commands.find { it.name == pieces[0] }
         if(!command) {
-            bot.send(channel, "Module '${module.name()}' doesn't have a command '${(pieces[1]) ?: ''}'.")
+            bot.send(channel, "Module '${module.name()}' doesn't have a command '${(pieces[0]) ?: ''}'.")
         }
-        else if(pieces.size() < 3) {
+        else if(pieces.size() < 2) {
             bot.send(channel, "You need to provide an alias to remove.")
         }
-        if(!(pieces[2] in command.triggers)) {
-            bot.send(channel, "Command '${command.name}' of module '${module.name()}' is not aliased to '${(pieces[2]) ?: ''}'.")
+        pieces.remove(0)
+        String alias = pieces.join(' ')
+        if(!(alias in command.triggers)) {
+            bot.send(channel, "Command '${command.name}' of module '${module.name()}' is not aliased to '${alias ?: ''}'.")
         }
         else if(command.triggers.size() < 2) {
             bot.send(channel, "Cannot remove the last alias of a command.")
         }
         else if(bot.isOwner(sender) || (command.mode != AccessMode.OWNER_ONLY)) {
-            String result = command.triggers.remove(pieces[2])
-            bot.send(channel, "Removed '${(pieces[2]) ?: ''}' as an alias for command '${command.name}' of module '${module.name()}'.")
+            String result = command.triggers.remove(alias)
+            bot.send(channel, "Removed '${alias ?: ''}' as an alias for command '${command.name}' of module '${module.name()}'.")
         }
         else {
             bot.send(channel, "You can't modify the aliases of that command.")
@@ -361,24 +378,31 @@ class CoreModule extends Module {
         }
     }
 
-    void showCommands(String message, String sender, String channel) {
+    void doHelp(String message, String sender, String channel) {
         List pieces = message.split(' ')
         pieces.remove(0)
-        Module module = bot.modules.find { it.name() == pieces[0] }
-        if(!module) {
-            bot.send(channel, "No module '${(pieces[0]) ?: ''}' is loaded. To get a list of loaded modules, try the modules command.")
+        if(!pieces) {
+            bot.send(sender, getModules())
             return
         }
-        List l = []
-        module.commands.each { command ->
-            if(isValid(command, sender) || command.mode == AccessMode.DISABLED) {
-                l << command.name
-            }
+        Module module = bot.modules.find { it.name() == pieces[0] }
+        if(!module) {
+            bot.send(sender, "No module ${pieces[0]} loaded.")
+            return
         }
-        bot.send(channel, "Commands of module '${module.name()}': ${l.join(', ')}")
+        Command command = module.commands.find { it.name == pieces[1] }
+        if(pieces.size() == 1) {
+            bot.send(sender, showModuleInfo(module))
+        }
+        else if(!command) {
+            bot.send(sender, "Module '${module.name()}' doesn't have a command '${(pieces[1]) ?: ''}'.")
+        }
+        else {
+            bot.send(sender, showCommandInfo(command))
+        }
     }
 
-    void showModules(String channel) {
+    String getModules() {
         List active = []
         List restricted = []
         List owneronly = []
@@ -389,12 +413,43 @@ class CoreModule extends Module {
             else if(module.mode == AccessMode.OWNER_ONLY) owneronly << module.name()
             else disabled << module.name()
         }
-        String message = ''
-        message += active ? "Enabled: ${active.join(', ')}\n" : ''
-        message += restricted ? "Restricted: ${restricted.join(', ')}\n" : ''
-        message += owneronly ? "Owner-only: ${owneronly.join(', ')}\n" : ''
-        message += disabled ? "Disabled: ${disabled.join(', ')}\n" : ''
-        message = message ?: 'No modules loaded.'
-        bot.send(channel, message)
+        String message = "Modules:\n"
+        message += active ? "|   Enabled: ${active.join(', ')}\n" : ''
+        message += restricted ? "|   Restricted: ${restricted.join(', ')}\n" : ''
+        message += owneronly ? "|   Owner-only: ${owneronly.join(', ')}\n" : ''
+        message += disabled ? "|   Disabled: ${disabled.join(', ')}\n" : ''
+        message = message ?: '|   No modules loaded.'
+        return message
+    }
+
+    String showModuleInfo(Module module) {
+        List active = []
+        List restricted = []
+        List owneronly = []
+        List disabled = []
+        module.commands.each { command ->
+            if(command.mode == AccessMode.ENABLED) active << command.name
+            else if(command.mode == AccessMode.RESTRICTED) restricted << command.name
+            else if(command.mode == AccessMode.OWNER_ONLY) owneronly << command.name
+            else disabled << command.name
+        }
+        String message = (module.helpMessage) ? "Module ${module.name()}: ${module.helpMessage}\n" : "${module.name()}:\n"
+        message += active ? "|   Enabled: ${active.join(', ')}\n" : ''
+        message += restricted ? "|   Restricted: ${restricted.join(', ')}\n" : ''
+        message += owneronly ? "|   Owner-only: ${owneronly.join(', ')}\n" : ''
+        message += disabled ? "|   Disabled: ${disabled.join(', ')}\n" : ''
+        message = message ?: '|   No commands in module \'${module.name()}\'.'
+        return message
+    }
+
+    String showCommandInfo(Command command) {
+        String message = (command.helpMessage) ? "Command ${command.name}: ${command.helpMessage}\n" : "${command.name}:\n"
+        AccessMode accessability = command.mode
+        Set triggers = command.triggers
+        List on = command.on.collect { Action.toString(it) }
+        message += "|   Status:       ${accessability}\n"
+        message += "|   Triggered by: ${triggers.join(', ')}\n"
+        message += "|   Activates on: ${on.join(', ')}\n"
+        return message
     }
 }

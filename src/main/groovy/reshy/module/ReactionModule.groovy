@@ -11,28 +11,49 @@ class ReactionModule extends Module {
     // options inherited from superclass
     // mode inherited from superclass
     // commands inherited from superclass
+    // name inherited from superclass
+    // helpMessage inherited from superclass
 
     private static final List REGISTERS = [Action.ACTION, Action.JOIN, Action.MESSAGE, Action.PRIVATEMESSAGE]
 
-    void initCommands() {
+    private static final List HAPPY_FACES = [':)', ':D', '^-^', '^.^', '^o^', '^^']
+    private static final List SAD_FACES = [':(', 'D:', ';-;', ';^;', ';~;']
+
+    void init() {
+        name = 'reaction'
+        helpMessage = 'Provides various for interacting directly with users. Not particularly useful, but fun.'
         commands = [
             [name: 'greet', mode: AccessMode.ENABLED, triggers: [], on: [Action.JOIN],
-            condition: null,
-            action: { String... sc -> sendHello(*sc) }
+                condition: null,
+                action: { String... sc -> sendHello(*sc) },
+                helpMessage: 'Greets a user when they join a channel. Not invoked.'
             ] as Command,
-            [name: 'hello', mode: AccessMode.ENABLED, triggers: ['~hello', 'hi', 'hello', 'hey', 'hiho', 'oi'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
-            condition: { String message -> delegate.triggers.find { it.equalsIgnoreCase(message.split(' ')[0]) } && triggerHello(message) },
-            action: { String... msc -> sendHello(msc[1], msc[2]) }
+            [name: 'hello', mode: AccessMode.ENABLED, triggers: ['~hello', 'hi', 'hello', 'hey', 'hiho', 'oi', 'heyo'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
+                condition: { String message -> delegate.triggers.find { message =~ /^(?i)${it}[,]{0,1}[\s]+${bot.getNick()}[\.!]*(?-i)$/ || (message.split(' ')[0] == it && it[0] == '~') } },
+                action: { String... msc -> sendHello(msc[1], msc[2]) },
+                helpMessage: 'Says hello to a user. Invoked as [trigger], or as [trigger (with or without ~)] [bot nick]'
             ] as Command,
             [name: 'farewell', mode: AccessMode.ENABLED, triggers: ['~bye', 'bye', 'later', 'seeya', 'goodbye', 'night'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
-            condition: {String message -> delegate.triggers.find { it.equalsIgnoreCase(message.split(' ')[0]) } && triggerHello(message) }, // We can just use triggerHello again because the logic is the same.
-            action: { String... msc -> sendGoodbye(msc[1], msc[2]) }
+                condition: { String message -> delegate.triggers.find { message =~ /^(?i)${it}[,]{0,1}[\s]+${bot.getNick()}[\.!]*(?-i)$/ || (message.split(' ')[0] == it && it[0] == '~') } },
+                action: { String... msc -> sendGoodbye(msc[1], msc[2]) },
+                helpMessage: 'Says goodbye to a user. Invoked as [trigger], or as [trigger (with or without ~)] [bot nick]'
+            ] as Command,
+            [name: 'pat', mode: AccessMode.ENABLED, triggers: ['~pat', '~headpat', '~pats', '~headpats'], on: [Action.ACTION, Action.MESSAGE, Action.PRIVATEMESSAGE],
+                condition: { String message -> delegate.triggers.find { message.split(' ')[0] == it || message =~ /^(?i)${it - '~'}[\s]+${bot.getNick()}[\.!]*(?-i)$/} },
+                action: { String... msc -> sendHappyFace(msc[2]) },
+                helpMessage: 'Returns a random happy face in response to an action. Can be invoked from /me. Invoked as [trigger], or as [trigger (with or without ~)] [bot nick]'
+            ] as Command,
+            [name: 'scold', mode: AccessMode.ENABLED, triggers: ['~bad', '~scolds'], on: [Action.ACTION, Action.MESSAGE, Action.PRIVATEMESSAGE],
+                condition: { String message -> delegate.triggers.find { message.split(' ')[0] == it || message =~ /^(?i)${it - '~'}[\s]+${bot.getNick()}[\.!]*(?-i)$/} },
+                action: { String... msc -> sendSadFace(msc[2]) },
+                helpMessage: 'Returns a random sad face in response to an action. Can be invoked from /me. Invoked as [trigger], or as [trigger (with or without ~)] [bot nick]'
+            ] as Command,
+            [name: 'reciprocate', mode: AccessMode.ENABLED, triggers: ['~knuffles', '~snuggles', '~cuddles', '~high-fives'], on: [Action.ACTION, Action.MESSAGE, Action.PRIVATEMESSAGE],
+                condition: { String message -> delegate.triggers.find { message.split(' ')[0] == it || message =~ /^(?i)${it - '~'}[\s]+${bot.getNick()}[\.!]*(?-i)$/} },
+                action: { String... msc -> reciprocate(*msc) },
+                helpMessage: 'Reciprocates an action on the list of triggers. Can be invoked from /me. Invoked as [trigger], or as [trigger (with or without ~)] [bot nick]'
             ] as Command
         ]
-    }
-
-    String name() {
-        return 'reaction'
     }
 
     boolean registers(Action action) {
@@ -41,7 +62,7 @@ class ReactionModule extends Module {
 
     void setup(ReshBot bot) {
         this.bot = bot
-        this.options = bot.getOptions().reaction
+        this.options = bot.getOptions()[name]
         this.mode = options?.mode ? AccessMode.fromString(options.mode) : AccessMode.ENABLED
         commands.each { command -> 
             Map entry = (options?.commands) ? options.commands[command.name] : null
@@ -128,5 +149,18 @@ class ReactionModule extends Module {
 
     void sendGoodbye(String sender, String channel) {
         bot.send(channel, "Goodbye ${sender}!")
+    }
+
+    void sendHappyFace(String channel) {
+        bot.send(channel, HAPPY_FACES[Math.random() * HAPPY_FACES.size() as int])
+    }
+
+    void sendSadFace(String channel) {
+        bot.send(channel, SAD_FACES[Math.random() * SAD_FACES.size() as int])
+    }
+
+    void reciprocate(String message, String sender, String channel) {
+        String action = message.split(' ')[0] - '~'
+        bot.sendAction(channel, "${action} ${sender}.")
     }
 }

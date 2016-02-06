@@ -11,24 +11,26 @@ class DiceModule extends Module {
     // options inherited from superclass
     // mode inherited from superclass
     // commands inherited from superclass
+    // name inherited from superclass
+    // helpMessage inherited from superclass
 
     private static final List REGISTERS = [Action.MESSAGE, Action.PRIVATEMESSAGE]
 
-    void initCommands() {
+    void init() {
+        name = 'dice'
+        helpMessage = 'Provides functionality for rolling dice.'
         commands = [
             [name: 'roll', mode: AccessMode.ENABLED, triggers: ['~roll'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String ... msc -> doRoll(msc[0], msc[2]) }
+                action: { String ... msc -> doRoll(msc[0], msc[2]) },
+                helpMessage: 'Rolls a given number of dice with a given number of sides and applys an optional modifier to each roll, then displays the results along with an optional tag. Invoked as [trigger] [num]d[sides] [+/-mod] [tag]'
             ] as Command,
             [name: 'add', mode: AccessMode.ENABLED, triggers: ['~add'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String ... msc -> doAdd(msc[0], msc[2]) }
+                action: { String ... msc -> doAdd(msc[0], msc[2]) },
+                helpMessage: 'Rolls a given number of dice with a given number of sides and applys an optional modifier to each roll, then displays the sum of the results along with an optional tag. Invoked as [trigger] [num]d[sides] [+/-mod] [tag]'
             ] as Command
         ]
-    }
-
-    String name() {
-        return 'dice'
     }
 
     boolean registers(Action action) {
@@ -37,7 +39,7 @@ class DiceModule extends Module {
 
     void setup(ReshBot bot) {
         this.bot = bot
-        this.options = bot.getOptions().dice
+        this.options = bot.getOptions()[name]
         this.mode = options?.mode ? AccessMode.fromString(options.mode) : AccessMode.ENABLED
         commands.each { command -> 
             Map entry = options?.commands[command.name]

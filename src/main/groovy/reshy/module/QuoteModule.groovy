@@ -4,6 +4,10 @@ import reshy.ReshBot
 import reshy.data.Action
 import reshy.data.AccessMode
 import reshy.data.Command
+import reshy.data.Quote
+
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
 
 class QuoteModule extends Module {
 
@@ -11,42 +15,52 @@ class QuoteModule extends Module {
     // options inherited from superclass
     // mode inherited from superclass
     // commands inherited from superclass
+    // name inherited from superclass
+    // helpMessage inherited from superclass
 
     private static final List REGISTERS = [Action.MESSAGE, Action.PRIVATEMESSAGE]
 
     private static final String DEFAULT_PATH_TO_FILE = System.getProperty('user.dir')
-    private static final String DEFAULT_FILE = 'quotes.txt'
+    private static final String DEFAULT_FILE = 'quotes.json'
     private File file
 
-    private static final List quotes = []
+    private static final List QUOTES = []
 
-    void initCommands() {
+    void init() {
+        name = 'quote'
+        helpMessage = 'Provides functionality for storing, finding, and retrieving quotes.'
         commands = [
             [name: 'addquote', mode: AccessMode.ENABLED, triggers: ['~addquote'], on: [Action.MESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> addQuote(*msc) }
+                action: { String... msc -> addQuote(*msc) },
+                helpMessage: 'Adds a quote to the list of quotes. Invoked as [trigger] [quote]'
             ] as Command,
             [name: 'delquote', mode: AccessMode.ENABLED, triggers: ['~delquote'], on: [Action.MESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> removeQuote(msc[0], msc[2]) }
+                action: { String... msc -> removeQuote(msc[0], msc[2]) },
+                helpMessage: 'Removes the quote at the given position from the list of quotes. Invoked as [trigger] [position]'
             ] as Command,
             [name: 'findquote', mode: AccessMode.ENABLED, triggers: ['~findquote'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> findQuote(msc[0], msc[2]) }
+                action: { String... msc -> findQuote(msc[0], msc[2]) },
+                helpMessage: 'Finds all quotes containing the given text. Invoked as [trigger] [text]'
             ] as Command,
             [name: 'quote', mode: AccessMode.ENABLED, triggers: ['~quote'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> getQuote(msc[0], msc[2]) }
+                action: { String... msc -> getQuote(msc[0], msc[2]) },
+                helpMessage: 'Returns the quote at the given index from the list of quotes - if no index is given, returns a random quote. Invoked as [trigger] [optional index]'
             ] as Command,
             [name: 'numquotes', mode: AccessMode.ENABLED, triggers: ['~numquotes'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String... msc -> numQuotes(msc[2]) }
+                action: { String... msc -> numQuotes(msc[2]) },
+                helpMessage: 'Returns the number of quotes in the list. Invoked as [trigger]'
+            ] as Command,
+            [name: 'whoquote', mode: AccessMode.ENABLED, triggers: ["~who"], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
+                condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
+                action: { String... msc -> whoQuote(msc[0], msc[2]) },
+                helpMessage: 'Returns the nick of the user who added the quote to the given index. Invoked as [trigger] [index]'
             ] as Command
         ]
-    }
-
-    String name() {
-        return 'quote'
     }
 
     boolean registers(Action action) {
@@ -55,7 +69,7 @@ class QuoteModule extends Module {
 
     void setup(ReshBot bot) {
         this.bot = bot
-        this.options = bot.getOptions().quote
+        this.options = bot.getOptions()[name]
         this.mode = options?.mode ? AccessMode.fromString(options.mode) : AccessMode.ENABLED
         String filePath = options?.filepath ?: DEFAULT_PATH_TO_FILE
         String fileName = options?.filename ?: DEFAULT_FILE
@@ -73,7 +87,7 @@ class QuoteModule extends Module {
     }
 
     Map getSettings() {
-        Map settings = [mode: AccessMode.toString(this.mode), filepath: options.filepath, filename: options.filename]
+        Map settings = [mode: AccessMode.toString(this.mode), filepath: options?.filepath ?: DEFAULT_PATH_TO_FILE, filename: options?.filename ?: DEFAULT_FILE]
         Map commandMap = [:]
         commands.each { command ->
             List actions = command.on.collect { Action.toString(it) }
@@ -113,9 +127,9 @@ class QuoteModule extends Module {
         List pieces = message.split(' ')
         pieces.remove(0)
         String quote = pieces.join(' ')
-        file << "$quote\n"
-        quotes << quote
-        bot.send(channel, "Quote added in position ${quotes.size() - 1}.")
+        QUOTES << ([quote: quote, sender: sender] as Quote)
+        saveQuotes()
+        bot.send(channel, "Quote added in position ${QUOTES.size() - 1}.")
     }
 
     void removeQuote(String message, String channel) {
@@ -130,12 +144,14 @@ class QuoteModule extends Module {
             bot.send(channel, 'Position to remove must be an integer.')
             return
         }
-        if(index >= 0 && index < quotes.size()) {
-            String quote = quotes.remove(index)
+        if(index >= 0 && index < QUOTES.size()) {
+            Quote quote = QUOTES.remove(index)
             saveQuotes()
-            bot.send(channel, "Quote \"${quote}\" removed from position ${index}.")
+            bot.send(channel, "Quote \"${quote.quote}\" removed from position ${index}.")
         }
-        bot.send(channel, "Quote not found for index ${index}.")
+        else {
+            bot.send(channel, "Quote not found for index ${index}.")
+        }
     }
 
     void findQuote(String message, String channel) {
@@ -144,7 +160,8 @@ class QuoteModule extends Module {
         String piece = pieces.join(' ')
         String replyQuote
         List indeces = []
-        quotes.eachWithIndex { quote, index ->
+        QUOTES.eachWithIndex { quoteObject, index ->
+            String quote = quoteObject.quote
             if(!replyQuote && quote.contains(piece)) {
                 replyQuote = quote
                 indeces << index
@@ -167,7 +184,7 @@ class QuoteModule extends Module {
         String position = pieces.join(' ')
         int index
         if(position == '') {
-            index = (Math.random() * quotes.size()) as int
+            index = (Math.random() * QUOTES.size()) as int
         }
         else {
             try {
@@ -177,15 +194,45 @@ class QuoteModule extends Module {
                 bot.send(channel, 'Quote index needs to be a number.')
             }
         }
-        bot.send(channel, "${quotes[index] ? "Quote $index - ${quotes[index]}" : ''}")
+        bot.send(channel, "${QUOTES[index] ? "Quote ${index}: ${QUOTES[index].quote}" : ''}")
     }
 
     void numQuotes(String channel) {
-        bot.send(channel, "${quotes.size()} quotes.")
+        bot.send(channel, "${QUOTES.size()} quotes.")
+    }
+
+    void whoQuote(String message, String channel) {
+        List pieces = message.split(' ')
+        pieces.remove(0)
+        String indexString = pieces.join(' ')
+        int index
+        try {
+            index = indexString as int
+        }
+        catch(NumberFormatException e) {
+            bot.send(channel, 'Position to find author of must be an integer.')
+            return
+        }
+        if(index >= 0 && index < QUOTES.size()) {
+            Quote quote = QUOTES.get(index)
+            bot.send(channel, "Quote ${index} added by: ${quote.sender}.")
+        }
+        else {
+            bot.send(channel, "Quote not found for index ${index}.")
+        }
+    }
+
+    void saveQuotes() {
+        file.delete()
+        file.createNewFile()
+        file.withWriter { writer ->
+            writer.write JsonOutput.prettyPrint(JsonOutput.toJson(QUOTES))
+        }
     }
 
     void loadQuotes() {
-        quotes.clear()
-        quotes.addAll(file.collect { it })
+        QUOTES.clear()
+        String jsonString = file.collect { it }.join(' ')
+        QUOTES.addAll(new JsonSlurper().parseText(jsonString).collect { it as Quote })
     }
 }
