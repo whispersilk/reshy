@@ -49,9 +49,14 @@ class ReactionModule extends Module {
                 helpMessage: 'Returns a random sad face in response to an action. Can be invoked from /me. Invoked as [trigger], or as [trigger (with or without ~)] [bot nick]'
             ] as Command,
             [name: 'reciprocate', mode: AccessMode.ENABLED, triggers: ['~knuffles', '~snuggles', '~cuddles', '~high-fives'], on: [Action.ACTION, Action.MESSAGE, Action.PRIVATEMESSAGE],
-                condition: { String message -> delegate.triggers.find { message.split(' ')[0] == it || message =~ /^(?i)${it - '~'}[\s]+${bot.getNick()}[\.!]*(?-i)$/} },
+                condition: { String message -> (delegate.triggers.find { message.split(' ')[0] == it } && message.split(' ').length == 1) || delegate.triggers.find { message =~ /^(?i)${it - '~'}[\s]+${bot.getNick()}[\.!]*(?-i)$/ } },
                 action: { String... msc -> reciprocate(*msc) },
                 helpMessage: 'Reciprocates an action on the list of triggers. Can be invoked from /me. Invoked as [trigger], or as [trigger (with or without ~)] [bot nick]'
+            ] as Command,
+            [name: 'doto', mode: AccessMode.ENABLED, triggers: ['~knuffles', '~snuggles', '~cuddles'], on: [Action.MESSAGE],
+                condition: { String message -> delegate.triggers.find { message.split(' ')[0] == it } && message.split(' ').length > 1 },
+                action: { String... msc -> doTo(*msc) },
+                helpMessage: 'Does an action on the list of triggers to a user in the current channel. Invoked as [trigger] [nick]'
             ] as Command
         ]
     }
@@ -162,5 +167,18 @@ class ReactionModule extends Module {
     void reciprocate(String message, String sender, String channel) {
         String action = message.split(' ')[0] - '~'
         bot.sendAction(channel, "${action} ${sender}.")
+    }
+
+    void doTo(String message, String sender, String channel) {
+        String action, user
+        (action, user) = message.split(' ')
+        if(bot.getUsers(channel).find { user.equalsIgnoreCase(it.getNick() - '~') } ) {
+            if(user.equalsIgnoreCase(bot.getNick())) {
+                reciprocate(message, sender, channel)
+            }
+            else {
+                bot.sendAction(channel, "${action - '~'} ${user}.")
+            }
+        }
     }
 }

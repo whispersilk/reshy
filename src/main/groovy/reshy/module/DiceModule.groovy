@@ -15,6 +15,8 @@ class DiceModule extends Module {
     // helpMessage inherited from superclass
 
     private static final List REGISTERS = [Action.MESSAGE, Action.PRIVATEMESSAGE]
+    private static final int MAX_ROLLS = 500
+    private static final String CHOOSE_SEPARATOR = '\\.|\\||,' // This is a regex string, but special characters must be escaped using \\
 
     void init() {
         name = 'dice'
@@ -22,13 +24,18 @@ class DiceModule extends Module {
         commands = [
             [name: 'roll', mode: AccessMode.ENABLED, triggers: ['~roll'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String ... msc -> doRoll(msc[0], msc[2]) },
+                action: { String ... msc -> doRoll(*msc) },
                 helpMessage: 'Rolls a given number of dice with a given number of sides and applys an optional modifier to each roll, then displays the results along with an optional tag. Invoked as [trigger] [num]d[sides] [+/-mod] [tag]'
             ] as Command,
             [name: 'add', mode: AccessMode.ENABLED, triggers: ['~add'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
-                action: { String ... msc -> doAdd(msc[0], msc[2]) },
+                action: { String ... msc -> doAdd(*msc) },
                 helpMessage: 'Rolls a given number of dice with a given number of sides and applys an optional modifier to each roll, then displays the sum of the results along with an optional tag. Invoked as [trigger] [num]d[sides] [+/-mod] [tag]'
+            ] as Command,
+            [name: 'choose', mode: AccessMode.ENABLED, triggers: ['~choose'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
+                condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
+                action: { String ... msc -> doChoose(*msc) },
+                helpMessage: 'Chooses one option from a list. Invoked as [trigger] [option 1] | [option 2] | ... | [option x]'
             ] as Command
         ]
     }
@@ -88,7 +95,7 @@ class DiceModule extends Module {
         }
     }
 
-    void doRoll(String message, String channel) {
+    void doRoll(String message, String sender, String channel) {
         List pieces = message.split(' ')
         pieces.remove(0)
         String roll = pieces.join(' ')
@@ -103,6 +110,10 @@ class DiceModule extends Module {
         (rolls, sides, error) = getNumAndSides(numAndSides)
         if(error) {
             bot.send(channel, error)
+            return
+        }
+        if(rolls > MAX_ROLLS) {
+            bot.send(channel, "Sorry, I won't let you roll more than ${MAX_ROLLS} dice at once.")
             return
         }
         String modAndMult = roll.find(/^[\s]*[\+-][\s]*[A-Za-z0-9]+/)
@@ -118,10 +129,16 @@ class DiceModule extends Module {
         for(int x = 0; x < rolls; x++) {
             results << ((Math.random() * sides + 1 + mod * mult) as int)
         }
-        bot.send(channel, "[${results.join(', ')}]${tag ? ' - Tag: ' + tag : ''}")
+        if(rolls > 30) {
+            bot.send(channel, "${sender}, I'm sending the result of the rolls to you directly to avoid cluttering the channel.")
+            bot.send(sender, "[${results.join(', ')}]${tag ? ' - Tag: ' + tag : ''}")
+        }
+        else {
+            bot.send(channel, "[${results.join(', ')}]${tag ? ' - Tag: ' + tag : ''}")
+        }
     }
 
-    void doAdd(String message, String channel) {
+    void doAdd(String message, String sender, String channel) {
         List pieces = message.split(' ')
         pieces.remove(0)
         String roll = pieces.join(' ')
@@ -136,6 +153,10 @@ class DiceModule extends Module {
         (rolls, sides, error) = getNumAndSides(numAndSides)
         if(error) {
             bot.send(channel, error)
+            return
+        }
+        else if(rolls > MAX_ROLLS) {
+            bot.send(channel, "Sorry, I won't let you add more than $MAX_ROLLS rolls at once.")
             return
         }
         String modAndMult = roll.find(/^[\s]*[\+-][\s]*[A-Za-z0-9]+/)
@@ -152,6 +173,14 @@ class DiceModule extends Module {
             result += ((Math.random() * sides + 1 + mod * mult) as int)
         }
         bot.send(channel, "[${result}]${tag ? ' - Tag: ' + tag : ''}")
+    }
+
+    void doChoose(String message, String sender, String channel) {
+        List pieces = message.split(' ')
+        pieces.remove(0)
+        List options = pieces.join(' ').split(CHOOSE_SEPARATOR).collect { it.trim() }
+        String option = options[(Math.random() * options.size) as int]
+        bot.send(channel, "Of those options, I chose: $option")
     }
 
     List getNumAndSides(String numAndSides) {

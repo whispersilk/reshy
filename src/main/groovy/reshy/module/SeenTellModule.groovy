@@ -167,15 +167,15 @@ class SeenTellModule extends Module {
     void doSeen(String message, String sender, String channel) {
         List pieces = message.split(' ')
         String user = pieces[1]
-        if(user == bot.getNick()) {
+        if(user.equalsIgnoreCase(bot.getNick())) {
             bot.send(channel, "I'm here right now!")
         }
-        else if(user == sender) {
+        else if(user.equalsIgnoreCase(sender)) {
             bot.send(channel, "You're right here!")
         }
         else {
             Seen seen = SEENS.find { seen ->
-                seen.user == user
+                seen.user?.equalsIgnoreCase(user)
             }
             if(seen) {
                 bot.send(channel, seen.print())
@@ -190,7 +190,7 @@ class SeenTellModule extends Module {
         List pieces = message.split(' ')
         pieces.remove(0)
         String recipient = pieces.remove(0)
-        if(recipient == bot.getNick()) {
+        if(recipient.equalsIgnoreCase(bot.getNick())) {
             bot.send(channel, "I hear you loud and clear!")
         }
         else if(recipient == sender) {

@@ -14,6 +14,8 @@ import reshy.module.SeenTellModule
 import reshy.util.BotAccessData
 import reshy.util.BotOptions
 
+import com.google.common.base.Splitter
+
 class ReshBot extends PircBot {
 
     private static final List<Class> MODULE_NAMES = [CoreModule, CapeModule, DiceModule, QuoteModule, ReactionModule, SeenTellModule] // List of module classes to invoke. Groovy allows us to leave off the ".class"
@@ -36,6 +38,7 @@ class ReshBot extends PircBot {
         this.setVerbose(getOptions().bot.verbose)
         this.setMessageDelay(getOptions().bot.messagedelay as long)
         this.changeNick(getOptions().bot.nick)
+        this.identify(getOptions().bot.password)
         getOptions().bot.autojoin.each { channel ->
             this.joinChannel(channel)
         }
@@ -75,7 +78,7 @@ class ReshBot extends PircBot {
     }
 
     String save() {
-        Map map = [bot:[verbose: false, messagedelay: getMessageDelay(), server: getServer(), nick: getNick(), autojoin: getOptions().bot.autojoin], accessdata: [owner: accessData.owner, admins: accessData.admins as List]]
+        Map map = [bot:[verbose: false, messagedelay: getMessageDelay(), server: getServer(), nick: getNick(), password: getOptions().bot.password, autojoin: getOptions().bot.autojoin], accessdata: [owner: accessData.owner, admins: accessData.admins as List]]
         modules.each { module ->
             map.put(module.name(), module.getSettings())
         }
@@ -143,7 +146,9 @@ class ReshBot extends PircBot {
     // Convenience method for sending multi-line messages.
     void send(String channel, String messages) {
         messages.split('\n').each { message ->
-            sendMessage(channel, message)
+            for(String msg : Splitter.fixedLength(441).split(message)) {
+                sendMessage(channel, msg)
+            }
         }
     }
 }

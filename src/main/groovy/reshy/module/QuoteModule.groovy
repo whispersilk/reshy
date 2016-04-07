@@ -192,6 +192,7 @@ class QuoteModule extends Module {
             }
             catch(NumberFormatException e) {
                 bot.send(channel, 'Quote index needs to be a number.')
+                return
             }
         }
         bot.send(channel, "${QUOTES[index] ? "Quote ${index}: ${QUOTES[index].quote}" : ''}")
