@@ -5,6 +5,7 @@
         "server": "",
         "nick": "Reshy",
         "password": "",
+        "googleOAuthJson": "",
         "autojoin": [
             
         ]
