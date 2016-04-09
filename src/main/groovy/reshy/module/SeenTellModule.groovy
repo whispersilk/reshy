@@ -6,9 +6,7 @@ import reshy.data.AccessMode
 import reshy.data.Command
 import reshy.data.Seen
 import reshy.data.Tell
-
-import groovy.json.JsonSlurper
-import groovy.json.JsonOutput
+import reshy.util.FileConnector
 
 class SeenTellModule extends Module {
 
@@ -24,8 +22,8 @@ class SeenTellModule extends Module {
     private static final String DEFAULT_PATH_TO_FILES = System.getProperty('user.dir')
     private static final String DEFAULT_SEEN_FILE = 'seens.json'
     private static final String DEFAULT_TELL_FILE = 'tells.json'
-    private File seenFile
-    private File tellFile
+    private FileConnector seenFile
+    private FileConnector tellFile
 
     private static final List SEENS = []
     private static final List TELLS = []
@@ -58,12 +56,12 @@ class SeenTellModule extends Module {
         String filePath = options?.filepath ?: DEFAULT_PATH_TO_FILES
         String seenFileName = options?.seenfilename ?: DEFAULT_SEEN_FILE
         String tellFileName = options?.tellfilename ?: DEFAULT_TELL_FILE
-        seenFile = new File(filePath, seenFileName)
-        tellFile = new File(filePath, tellFileName)
-        seenFile.createNewFile()
-        tellFile.createNewFile()
-        loadSeens()
-        loadTells()
+        seenFile = new FileConnector(filePath, seenFileName)
+        tellFile = new FileConnector(filePath, tellFileName)
+        SEENS.clear()
+        SEENS.addAll(seenFile.load('list').collect { Seen.fromMap(it) })
+        TELLS.clear()
+        TELLS.addAll(tellFile.load('list').collect { it as Tell })
         commands.each { command -> 
             Map entry = (options?.commands) ? options.commands[command.name] : null
             if(entry) {
@@ -145,7 +143,7 @@ class SeenTellModule extends Module {
             seen.message = message
             seen.time = Calendar.getInstance()
         }
-        saveSeens()
+        seenFile.save(SEENS.collect { Seen.toMap(it) })
     }
 
     void tellIfNeeded(String channel, String sender) {
@@ -160,7 +158,7 @@ class SeenTellModule extends Module {
             tells.each { message ->
                 TELLS.remove(message)
             }
-            saveTells()
+            tellFile.save(TELLS)
         }
     }
 
@@ -200,37 +198,8 @@ class SeenTellModule extends Module {
             String note = pieces.join(' ')
             Tell tell = [sender: sender, recipient: recipient, message: note] as Tell
             TELLS << tell
-            saveTells()
+            tellFile.save(TELLS)
             bot.send(channel, "I will tell them that!")
         }
-    }
-
-    void saveSeens() {
-        seenFile.delete()
-        seenFile.createNewFile()
-        List items = SEENS.collect { Seen.toMap(it) }
-        seenFile.withWriter { writer ->
-            writer.write JsonOutput.prettyPrint(JsonOutput.toJson(items))
-        }
-    }
-
-    void saveTells() {
-        tellFile.delete()
-        tellFile.createNewFile()
-        tellFile.withWriter { writer ->
-            writer.write JsonOutput.prettyPrint(JsonOutput.toJson(TELLS))
-        }
-    }
-
-    void loadSeens() {
-        SEENS.clear()
-        String jsonString = seenFile.collect { it }.join(' ')
-        SEENS.addAll(new JsonSlurper().parseText(jsonString).collect { Seen.fromMap(it) })
-    }
-
-    void loadTells() {
-        TELLS.clear()
-        String jsonString = tellFile.collect { it }.join(' ')
-        TELLS.addAll(new JsonSlurper().parseText(jsonString).collect { it as Tell })
     }
 }

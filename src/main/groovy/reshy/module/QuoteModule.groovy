@@ -5,9 +5,7 @@ import reshy.data.Action
 import reshy.data.AccessMode
 import reshy.data.Command
 import reshy.data.Quote
-
-import groovy.json.JsonSlurper
-import groovy.json.JsonOutput
+import reshy.util.FileConnector
 
 class QuoteModule extends Module {
 
@@ -22,7 +20,7 @@ class QuoteModule extends Module {
 
     private static final String DEFAULT_PATH_TO_FILE = System.getProperty('user.dir')
     private static final String DEFAULT_FILE = 'quotes.json'
-    private File file
+    private FileConnector quoteFile
 
     private static final List QUOTES = []
 
@@ -73,9 +71,9 @@ class QuoteModule extends Module {
         this.mode = options?.mode ? AccessMode.fromString(options.mode) : AccessMode.ENABLED
         String filePath = options?.filepath ?: DEFAULT_PATH_TO_FILE
         String fileName = options?.filename ?: DEFAULT_FILE
-        file = new File(filePath, fileName)
-        file.createNewFile()
-        loadQuotes()
+        quoteFile = new FileConnector(filePath, fileName)
+        QUOTES.clear()
+        QUOTES.addAll(quoteFile.load('list').collect { it as Quote })
         commands.each { command -> 
             Map entry = options?.commands[command.name]
             if(entry) {
@@ -128,7 +126,7 @@ class QuoteModule extends Module {
         pieces.remove(0)
         String quote = pieces.join(' ')
         QUOTES << ([quote: quote, sender: sender] as Quote)
-        saveQuotes()
+        quoteFile.save(QUOTES)
         bot.send(channel, "Quote added in position ${QUOTES.size() - 1}.")
     }
 
@@ -146,7 +144,7 @@ class QuoteModule extends Module {
         }
         if(index >= 0 && index < QUOTES.size()) {
             Quote quote = QUOTES.remove(index)
-            saveQuotes()
+            quoteFile.save(QUOTES)
             bot.send(channel, "Quote \"${quote.quote}\" removed from position ${index}.")
         }
         else {
@@ -221,19 +219,5 @@ class QuoteModule extends Module {
         else {
             bot.send(channel, "Quote not found for index ${index}.")
         }
-    }
-
-    void saveQuotes() {
-        file.delete()
-        file.createNewFile()
-        file.withWriter { writer ->
-            writer.write JsonOutput.prettyPrint(JsonOutput.toJson(QUOTES))
-        }
-    }
-
-    void loadQuotes() {
-        QUOTES.clear()
-        String jsonString = file.collect { it }.join(' ')
-        QUOTES.addAll(new JsonSlurper().parseText(jsonString).collect { it as Quote })
     }
 }

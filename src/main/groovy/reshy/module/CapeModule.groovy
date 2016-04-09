@@ -5,9 +5,8 @@ import reshy.data.Action
 import reshy.data.AccessMode
 import reshy.data.Command
 import reshy.data.Quote
-
-import groovy.json.JsonSlurper
-import groovy.json.JsonOutput
+import reshy.util.FileConnector
+import reshy.util.SpreadsheetConnector
 
 class CapeModule extends Module {
 
@@ -22,7 +21,8 @@ class CapeModule extends Module {
 
     private static final String DEFAULT_PATH_TO_FILE = System.getProperty('user.dir')
     private static final String DEFAULT_FILE = 'classes.json'
-    private File file
+    private FileConnector classFile
+    private SpreadsheetConnector capeData
 
     private Map classes
 
@@ -39,6 +39,11 @@ class CapeModule extends Module {
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
                 action: { String... msc -> viewQuantities(msc[2]) },
                 helpMessage: 'Views the number of capes with each classification. Invoked as [trigger]'
+            ] as Command,
+            [name: 'capeinfo', mode: AccessMode.ENABLED, triggers: ['~cape'], on: [Action.MESSAGE],
+                condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
+                action: { String... msc -> getInfoAboutCape(msc[0], msc[2]) },
+                helpMessage: 'Gets basic information about a cape, given that cape\'s name.'
             ] as Command
         ]
     }
@@ -53,9 +58,13 @@ class CapeModule extends Module {
         this.mode = options?.mode ? AccessMode.fromString(options.mode) : AccessMode.ENABLED
         String filePath = options?.filepath ?: DEFAULT_PATH_TO_FILE
         String fileName = options?.filename ?: DEFAULT_FILE
-        file = new File(filePath, fileName)
-        file.createNewFile()
-        loadClasses()
+        classFile = new FileConnector(filePath, fileName)
+        classes = classFile.load('map')
+        capeData = new SpreadsheetConnector('Approved Cape Info (Responses)', 'Form Responses 1')
+        String error = capeData.init(bot.getOptions().googleOAuthJson)
+        if(error) {
+            bot.send(bot.owner(), "capeData: $error")
+        }
         commands.each { command -> 
             Map entry = options?.commands ? options.commands[command.name] : null
             if(entry) {
@@ -125,7 +134,7 @@ class CapeModule extends Module {
             classes[classification] = Math.round(quantity * 10) / 10.0
         }
         classes[classification] = (classes[classification] > 0) ? classes[classification] : 0
-        saveClasses()
+        classFile.save(classes)
         String classificationName = capitalizeFirstLetter(classification)
         bot.send(channel, "${classificationName} count changed by ${quantity}. Current value: ${ (classes[classification] == (classes[classification] as int)) ? (classes[classification] as int) : classes[classification] }")
     }
@@ -138,28 +147,22 @@ class CapeModule extends Module {
         bot.send(channel, values.join(' | '))
     }
 
+    void getInfoAboutCape(String message, String channel) {
+        List pieces = message.split(' ')
+        pieces.remove(0)
+        String capeName = pieces.join(' ')
+        List data = capeData.parseFields(['redditusername', 'capename', 'ratings', 'orientation', 'approvalstatus'], capeData.findAll('capename', capeName))
+        Map cape = data.find { it.approvalstatus != 'Dropped'} ?: data[0]
+        String status = (cape.approvalstatus == 'Approved') ? 'A' : (cape.approvalstatus == 'Rejected') ? 'R' : (cape.approvalstatus == 'Deferred') ? 'D' : (cape.approvalstatus == 'Unstarted') ? 'U' : 'Dr'
+        String response = "${cape.capename} (${cape.ratings}) - ${cape.orientation ?: 'Orientation unknown'} | Creator: ${cape.redditusername} [$status]"
+        bot.send(channel, response)
+    }
+
     String capitalizeFirstLetter(String classification) {
         String toReturn = classification
         if(Character.isLetter(classification[0] as char)) {
             toReturn = classification.replace(classification[0] as char, Character.toUpperCase(classification[0] as char))
         }
         return toReturn
-    }
-
-    void saveClasses() {
-        file.delete()
-        file.createNewFile()
-        file.withWriter { writer ->
-            writer.write JsonOutput.prettyPrint(JsonOutput.toJson(classes))
-        }
-    }
-
-    void loadClasses() {
-        String jsonString = file.collect { it }.join(' ')
-        if(!jsonString) {
-            classes = [:]
-            return
-        }
-        classes = new JsonSlurper().parseText(jsonString)
     }
 }

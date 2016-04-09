@@ -103,11 +103,20 @@ class DiceModule extends Module {
             bot.send(channel, 'To roll you should use [X]dY [+/- mod] [tag]. X, Y, and mod should be integers.')
             return
         }
+        String mode = ''
         String numAndSides = roll.find(/^[A-Za-z0-9]*d[A-Za-z0-9]+/)
-        roll = roll.replaceFirst(/^[A-Za-z0-9]*d[A-Za-z0-9]+/, '')
+        if(!numAndSides) {
+            numAndSides = roll.find(/^[A-Za-z0-9]*h[A-Za-z0-9]+/)
+            roll = roll.replaceFirst(/^[A-Za-z0-9]*h[A-Za-z0-9]+/, '')
+            mode = 'h'
+        }
+        else {
+            roll = roll.replaceFirst(/^[A-Za-z0-9]*d[A-Za-z0-9]+/, '')
+            mode = 'd'
+        }
         int rolls, sides
         String error
-        (rolls, sides, error) = getNumAndSides(numAndSides)
+        (rolls, sides, error) = getNumAndSides(numAndSides, mode)
         if(error) {
             bot.send(channel, error)
             return
@@ -125,6 +134,15 @@ class DiceModule extends Module {
             return
         }
         String tag = roll.replaceFirst(/^[\s]*/, '')
+        if(mode == 'd') {
+            showAllRolls(sender, channel, rolls, sides, mod, mult, tag)
+        }
+        else if(mode == 'h') {
+            showHighestRoll(sender, channel, rolls, sides, mod, mult, tag)
+        }
+    }
+
+    void showAllRolls(String sender, String channel, int rolls, int sides, int mod, int mult, String tag) {
         List results = []
         for(int x = 0; x < rolls; x++) {
             results << ((Math.random() * sides + 1 + mod * mult) as int)
@@ -136,6 +154,15 @@ class DiceModule extends Module {
         else {
             bot.send(channel, "[${results.join(', ')}]${tag ? ' - Tag: ' + tag : ''}")
         }
+    }
+
+    void showHighestRoll(String sender, String channel, int rolls, int sides, int mod, int mult, String tag) {
+        int max = 0
+        for(int x = 0; x < rolls; x++) {
+            int roll = ((Math.random() * sides + 1 + mod * mult) as int)
+            if(max < roll) { max = roll }
+        }
+        bot.send(channel, "Highest of ${rolls}d${sides} is [${max}]${tag ? ' - Tag: ' + tag : ''}")
     }
 
     void doAdd(String message, String sender, String channel) {
@@ -150,7 +177,7 @@ class DiceModule extends Module {
         roll = roll.replaceFirst(/^[A-Za-z0-9]*d[A-Za-z0-9]+/, '')
         int rolls, sides
         String error
-        (rolls, sides, error) = getNumAndSides(numAndSides)
+        (rolls, sides, error) = getNumAndSides(numAndSides, 'd')
         if(error) {
             bot.send(channel, error)
             return
@@ -183,10 +210,10 @@ class DiceModule extends Module {
         bot.send(channel, "Of those options, I chose: $option")
     }
 
-    List getNumAndSides(String numAndSides) {
+    List getNumAndSides(String numAndSides, String separator) {
         int num, sides
         String error
-        List vals = numAndSides.split('d') as List
+        List vals = numAndSides.split(separator) as List
         try {
             num = (vals[0]) ? vals[0] as int : 1
         }

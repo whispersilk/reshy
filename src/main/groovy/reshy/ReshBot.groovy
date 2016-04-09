@@ -10,6 +10,7 @@ import reshy.module.DiceModule
 import reshy.module.QuoteModule
 import reshy.module.ReactionModule
 import reshy.module.SeenTellModule
+import reshy.module.TriggerModule
 
 import reshy.util.BotAccessData
 import reshy.util.BotOptions
@@ -18,7 +19,7 @@ import com.google.common.base.Splitter
 
 class ReshBot extends PircBot {
 
-    private static final List<Class> MODULE_NAMES = [CoreModule, CapeModule, DiceModule, QuoteModule, ReactionModule, SeenTellModule] // List of module classes to invoke. Groovy allows us to leave off the ".class"
+    private static final List<Class> MODULE_NAMES = [CoreModule, CapeModule, DiceModule, QuoteModule, ReactionModule, SeenTellModule, TriggerModule] // List of module classes to invoke. Groovy allows us to leave off the ".class"
     List<Module> modules
     private BotOptions options
     private BotAccessData accessData
@@ -100,6 +101,7 @@ class ReshBot extends PircBot {
     }
 
     void onDisconnect() {
+        println 'Disconnected from the server!'
         init()
     }
 
