@@ -4,6 +4,8 @@
         "messagedelay": 1,
         "server": "",
         "nick": "Reshy",
+        "password": "",
+        "googleOAuthJson": "",
         "autojoin": [
             
         ]
