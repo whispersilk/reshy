@@ -41,6 +41,11 @@ class SeenTellModule extends Module {
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
                 action: { String... msc -> doTell(*msc) },
                 helpMessage: 'Stores a message to be told to a user at a later time. Invoked as [trigger] [recipient nick] [message]'
+            ] as Command,
+            [name: 'telldump', mode: AccessMode.OWNER_ONLY, triggers: ['~telldump'], on: [Action.MESSAGE],
+                condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
+                action: { String... msc -> dumpTells(*msc) },
+                helpMessage: 'Dumps all messages left for the given nick. Invoked as [trigger] [nick]'
             ] as Command
         ]
     }
@@ -94,9 +99,7 @@ class SeenTellModule extends Module {
                 }
             }
         }
-        if(sender != bot.getNick()) {
-            update(channel, sender, "${sender} has joined ${channel}")
-        }
+        tellIfNeeded(channel, sender)
     }
 
     void onMessage(String channel, String sender, String login, String hostname, String message) {
@@ -200,6 +203,25 @@ class SeenTellModule extends Module {
             TELLS << tell
             tellFile.save(TELLS)
             bot.send(channel, "I will tell them that!")
+        }
+    }
+
+    void dumpTells(String message, String sender, String channel) {
+        List pieces = message.split(' ')
+        pieces.remove(0)
+        String recipient = pieces.remove(0)
+        List tells = TELLS.findAll { tell ->
+            tell.recipient.equalsIgnoreCase(recipient)
+        }
+        List messages = tells.collect { it.print() }
+        if(messages) {
+            String send = "Telldump for ${recipient}:\n|   "
+            send += messages.join('\n|   ')
+            bot.send(channel, send)
+            tells.each { tell ->
+                TELLS.remove(tell)
+            }
+            tellFile.save(TELLS)
         }
     }
 }

@@ -58,7 +58,7 @@ class SpreadsheetConnector {
         return (!worksheetFeed) ? 'Couldn\'t get feed for worksheet' : ''
     }
 
-    void ensureAuthorized() {
+    private void ensureAuthorized() {
         if(!credential) {
             credential = GoogleCredential.fromStream(CREDENTIAL_KEY.openStream()).createScoped(SCOPES)
         }
@@ -69,7 +69,7 @@ class SpreadsheetConnector {
 
     Set columns() {
         ensureAuthorized()
-        return listFeed.getEntries()[0].getCustomElements().getTags()
+        return worksheetFeed.getEntries()[0].getCustomElements().getTags()
     }
 
     ListEntry find(String column, String query, String mode = 'equals') {
@@ -83,6 +83,9 @@ class SpreadsheetConnector {
         ensureAuthorized()
         if(mode == 'equals') {
             return worksheetFeed.getEntries().findAll { it.getCustomElements().getValue(column) == query }
+        }
+        else if(mode == 'equals_insensitive') {
+            return worksheetFeed.getEntries().findAll { it.getCustomElements().getValue(column) instanceof String && it.getCustomElements().getValue(column).equalsIgnoreCase(query) }
         }
     }
 

@@ -90,6 +90,11 @@ class CoreModule extends Module {
                 action: { String... msc -> doHelp(*msc) },
                 helpMessage: 'Provides help menu information about a module or command. Invoked as [trigger] to display a list of modules, ' + 
                 '[trigger] [module] to display a module\'s help information and a list of its commands, or [trigger] [module] [command] to display a command\'s help information.'
+            ] as Command,
+            [name: 'rename', mode: AccessMode.OWNER_ONLY, triggers: ['~rename'], on: [Action.MESSAGE, Action.PRIVATEMESSAGE],
+                condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
+                action: { String... msc -> bot.changeNick(((msc[0]).split(' '))[1]) },
+                helpMessage: 'Changes this bot\'s nick to the given string, if possible. Invoked as [trigger] [newNick]'
             ] as Command
         ]
     }

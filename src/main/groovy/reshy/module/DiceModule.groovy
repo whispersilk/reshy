@@ -146,6 +146,9 @@ class DiceModule extends Module {
         List results = []
         for(int x = 0; x < rolls; x++) {
             results << ((Math.random() * sides + 1 + mod * mult) as int)
+            if(results[results.size() - 1] == sides) {
+                results[results.size() - 1] = "" + results[results.size() - 1] + ""
+            }
         }
         if(rolls > 30) {
             bot.send(channel, "${sender}, I'm sending the result of the rolls to you directly to avoid cluttering the channel.")
@@ -162,7 +165,7 @@ class DiceModule extends Module {
             int roll = ((Math.random() * sides + 1 + mod * mult) as int)
             if(max < roll) { max = roll }
         }
-        bot.send(channel, "Highest of ${rolls}d${sides} is [${max}]${tag ? ' - Tag: ' + tag : ''}")
+        bot.send(channel, "Highest of ${rolls}d${sides} is [${max == sides ? '' + max + '' : max}]${tag ? ' - Tag: ' + tag : ''}")
     }
 
     void doAdd(String message, String sender, String channel) {
@@ -199,7 +202,7 @@ class DiceModule extends Module {
         for(int x = 0; x < rolls; x++) {
             result += ((Math.random() * sides + 1 + mod * mult) as int)
         }
-        bot.send(channel, "[${result}]${tag ? ' - Tag: ' + tag : ''}")
+        bot.send(channel, "[${result == rolls * sides ? '' + result + '' : result}]${tag ? ' - Tag: ' + tag : ''}")
     }
 
     void doChoose(String message, String sender, String channel) {

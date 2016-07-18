@@ -79,7 +79,14 @@ class ReshBot extends PircBot {
     }
 
     String save() {
-        Map map = [bot:[verbose: false, messagedelay: getMessageDelay(), server: getServer(), nick: getNick(), password: getOptions().bot.password, autojoin: getOptions().bot.autojoin], accessdata: [owner: accessData.owner, admins: accessData.admins as List]]
+        Map map = [bot:[verbose: false,
+            messagedelay: getMessageDelay(),
+            server: getServer(), nick: getNick(),
+            password: getOptions().bot.password,
+            googleOAuthJson: getOptions().bot.googleOAuthJson,
+            autojoin: getOptions().bot.autojoin],
+            accessdata: [owner: accessData.owner, admins: accessData.admins as List]
+        ]
         modules.each { module ->
             map.put(module.name(), module.getSettings())
         }
@@ -101,7 +108,7 @@ class ReshBot extends PircBot {
     }
 
     void onDisconnect() {
-        println 'Disconnected from the server!'
+        this.connect(getOptions().bot.server)
         init()
     }
 

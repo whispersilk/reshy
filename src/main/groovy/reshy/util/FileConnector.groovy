@@ -5,14 +5,15 @@ import groovy.json.JsonOutput
 
 class FileConnector {
 
-    private String fileDir;
-    private String fileName;
     private File file;
 
     FileConnector(String dir, String name) {
-        this.fileDir = dir;
-        this.fileName = name;
-        file = new File(fileDir, fileName)
+        file = new File(dir, name)
+        file.createNewFile()
+    }
+
+    FileConnector(File fileObj) {
+        file = fileObj
         file.createNewFile()
     }
 

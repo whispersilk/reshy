@@ -28,7 +28,7 @@ class CapeModule extends Module {
 
     void init() {
         name = 'cape'
-        helpMessage = 'Provides functionality dealing with genning capes.'
+        helpMessage = 'Provides functionality that deals with getting information about capes.'
         commands = [
             [name: 'class', mode: AccessMode.ENABLED, triggers: ['~mover', '~shaker', '~brute', '~breaker', '~blaster', '~thinker', '~master', '~tinker', '~striker', '~changer', '~trump', '~stranger'], on: [Action.MESSAGE],
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
@@ -44,6 +44,11 @@ class CapeModule extends Module {
                 condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
                 action: { String... msc -> getInfoAboutCape(msc[0], msc[2]) },
                 helpMessage: 'Gets basic information about a cape, given that cape\'s name.'
+            ] as Command,
+            [name: 'findbymaker', mode: AccessMode.ENABLED, triggers: ['~capesby'], on: [Action.MESSAGE],
+                condition: { String message -> delegate.hasTrigger(message.split(' ')[0]) },
+                action: { String... msc -> getCapesByCreator(msc[0], msc[2]) },
+                helpMessage: 'Gets all the capes made by a given user, given that user\'s name.'
             ] as Command
         ]
     }
@@ -61,7 +66,7 @@ class CapeModule extends Module {
         classFile = new FileConnector(filePath, fileName)
         classes = classFile.load('map')
         capeData = new SpreadsheetConnector('Approved Cape Info (Responses)', 'Form Responses 1')
-        String error = capeData.init(bot.getOptions().googleOAuthJson)
+        String error = capeData.init(bot.getOptions().bot.googleOAuthJson)
         if(error) {
             bot.send(bot.owner(), "capeData: $error")
         }
@@ -156,6 +161,15 @@ class CapeModule extends Module {
         String status = (cape.approvalstatus == 'Approved') ? 'A' : (cape.approvalstatus == 'Rejected') ? 'R' : (cape.approvalstatus == 'Deferred') ? 'D' : (cape.approvalstatus == 'Unstarted') ? 'U' : 'Dr'
         String response = "${cape.capename} (${cape.ratings}) - ${cape.orientation ?: 'Orientation unknown'} | Creator: ${cape.redditusername} [$status]"
         bot.send(channel, response)
+    }
+
+    void getCapesByCreator(String message, String channel) {
+        List pieces = message.split(' ')
+        pieces.remove(0)
+        String user = pieces.join(' ')
+        List data = capeData.parseFields(['redditusername', 'capename'], capeData.findAll('redditusername', user, 'equals_insensitive'))
+        String capeList = data.collect { it.capename }.join(', ')
+        bot.send(channel, "Capes by ${user}: ${capeList}")
     }
 
     String capitalizeFirstLetter(String classification) {

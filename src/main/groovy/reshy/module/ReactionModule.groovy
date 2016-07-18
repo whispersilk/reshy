@@ -19,6 +19,9 @@ class ReactionModule extends Module {
     private static final List HAPPY_FACES = [':)', ':D', '^-^', '^.^', '^o^', '^^']
     private static final List SAD_FACES = [':(', 'D:', ';-;', ';^;', ';~;']
 
+    private static final List PIGS_BLOOD_OPTIONS = ['fetches the buckets.', 'thaws the offerings.', 'prepares the incense.', 'hides the pigs.', 'draws the pentagram.']
+    private static final double ODDS_OF_PIGSBLOOD = 0.6
+
     void init() {
         name = 'reaction'
         helpMessage = 'Provides various for interacting directly with users. Not particularly useful, but fun.'
@@ -57,6 +60,21 @@ class ReactionModule extends Module {
                 condition: { String message -> delegate.triggers.find { message.split(' ')[0] == it } && message.split(' ').length > 1 },
                 action: { String... msc -> doTo(*msc) },
                 helpMessage: 'Does an action on the list of triggers to a user in the current channel. Invoked as [trigger] [nick]'
+            ] as Command/*,
+            [name: 'speak', mode: AccessMode.OWNER_ONLY, triggers: ['~speak'], on: [Action.MESSAGE],
+                condition: { String message -> delegate.triggers.find { message.split(' ')[0] == it } && message.split(' ').length > 1 },
+                action: { String... msc -> sayPhrase(*msc) },
+                helpMessage: 'Causes the bot to say the given string in the given channel. Note that attempting to use this command for "/me" actions will fail. Invoked as [trigger] [channel] [text]'
+            ] as Command*/,
+            [name: 'pigsblood', mode: AccessMode.ENABLED, triggers: [], on: [Action.MESSAGE],
+                condition: { String message -> message.matches(/(?i).*pig[']{0,1}s blood.*(?-i)/) },
+                action: { String... msc -> pigsBlood(msc[2]) },
+                helpMessage: 'The ritual.'
+            ] as Command,
+            [name: 'ship', mode: AccessMode.ENABLED, triggers: ['~ship'], on: [Action.MESSAGE],
+                condition: { String message -> delegate.triggers.find { message.split(' ')[0] == it }},
+                action: { String... msc -> findShippingPair(msc[2]) },
+                helpMessage: 'Selects two users at random from the current channel (excluding me), and pairs them together. Invoked as [trigger]'
             ] as Command
         ]
     }
@@ -181,4 +199,24 @@ class ReactionModule extends Module {
             }
         }
     }
+
+    void pigsBlood(String channel) {
+        String phrase = PIGS_BLOOD_OPTIONS[(Math.random() * PIGS_BLOOD_OPTIONS.size()) as int]
+        double chance = Math.random()
+        if(chance <= ODDS_OF_PIGSBLOOD)
+        bot.sendAction(channel, "$phrase")
+    }
+
+    void findShippingPair(String channel) {
+        List users = bot.getUsers(channel) as List
+        users = users.findAll { it.getNick() != bot.getNick() }
+        def user1 = users[(Math.random() * users.size()) as int]
+        users = users - user1
+        def user2 = users[(Math.random() * users.size()) as int]
+        bot.send(channel, "${user1.getNick()} x ${user2.getNick()} OTP")
+    }
+
+/*    void sayPhrase(String message, String sender, String channel) {
+        String 
+    }*/
 }
